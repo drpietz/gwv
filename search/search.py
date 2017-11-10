@@ -5,36 +5,45 @@ import time
 def main():
     f = open("blatt3_environment.txt", "r")
     world = [list(line.rstrip()) for line in f]
-    frontier = [find(world, "s")]
+    start = find(world, "s")[0]
 
-    search(world, frontier)
+    search(world, start)
 
 
-def output(world, frontier):
+def output(world, visited, path, neighbours=None):
+    if neighbours is None:
+        neighbours = {}
 
     display = copy.deepcopy(world)
 
-    for path in frontier:
-        for (x, y) in path:
-            display[y][x] = "-"
+    put(display, '-', visited)
+    put(display, '+', path)
+    put(display, '#', neighbours)
 
-    next_path = frontier[0]
-    (x, y) = next_path[len(next_path) - 1]
-    display[y][x] = 'F'
-
-    for row in display:
-        print("".join(row))
-
-    print(len(frontier))
+    print_colorized(display)
 
 
-def prune(frontier, neighbours):
-    result = []
-    for neighbour in neighbours:
-        if not in_frontier(neighbour, frontier):
-            result.append(neighbour)
+def put(matrix, value, positions):
+    for (x, y) in positions:
+        matrix[y][x] = value
 
-    return result
+
+def print_colorized(matrix):
+    colors = {
+        '-': '\033[34m',
+        '+': '\033[33m',
+        '#': '\033[32m',
+        'x': '\033[37m'
+    }
+
+    for row in matrix:
+        for cell in row:
+            if cell in colors:
+                print(colors[cell] + cell + '\033[0m', end='')
+            else:
+                print(cell, end='')
+
+        print()
 
 
 def in_frontier(position, frontier):
@@ -45,29 +54,32 @@ def in_frontier(position, frontier):
     return False
 
 
+def search(world, start):
+    frontier = [[start]]
+    visited = {start}
 
-def search(world, frontier):
     while len(frontier) > 0:
-        time.sleep(0.5)
-
-        output(world, frontier)
+        time.sleep(0.25)
 
         path = frontier.pop(0)
         (x, y) = current = path[len(path) - 1]
         goals = find(world, 'g')
 
         if current in goals:
-            print("Gefunden")
+            output(world, visited, path)
             return path
 
         else:
-            free_neighbours = get_free_neighbours(world, x, y)
-            pruned_neighbours = prune(frontier, free_neighbours)
+            pruned_neighbours = get_free_neighbours(world, x, y) - visited
+
+            output(world, visited, path, pruned_neighbours)
 
             for n in pruned_neighbours:
                 new_path = path[:]
                 new_path.append(n)
                 frontier.append(new_path)
+
+            visited |= pruned_neighbours
 
 
 def find(world, value):
@@ -85,8 +97,8 @@ def find(world, value):
 
 
 def get_free_neighbours(world, x, y):
-    a = [(x-1, y), (x, y-1), (x+1, y), (x, y+1)]  # l,o,r,u
-    return [n for n in a if get_field(world, n[0], n[1]) != 'x']
+    a = {(x-1, y), (x, y-1), (x+1, y), (x, y+1)}  # l,o,r,u
+    return {n for n in a if get_field(world, n[0], n[1]) != 'x'}
 
 
 def get_field(world, x, y):
