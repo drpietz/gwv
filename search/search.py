@@ -28,8 +28,11 @@ def output(world, visited, path, neighbours=None):
 
 
 def put(matrix, value, positions):
+    height = len(matrix)
+    width = len(matrix[1])
     for (x, y) in positions:
-        matrix[y][x] = value
+        if x in range(width) and y in range(height):
+            matrix[y][x] = value
 
 
 def print_colorized(matrix):
