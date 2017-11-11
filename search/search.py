@@ -6,8 +6,11 @@ def main():
     f = open("blatt3_environment.txt", "r")
     world = [list(line.rstrip()) for line in f]
     start = find(world, "s")[0]
+    goals = find(world, 'g')
+    portals = find_portals(world)
 
-    search(world, start, StackFrontier)
+    search(world, start, portals, QueueFrontier, multiple_path_pruning)
+    # search(world, start, goals, portals, StackFrontier, circle_checking)
 
 
 def output(world, visited, path, neighbours=None):
@@ -54,7 +57,7 @@ def in_frontier(position, frontier):
     return False
 
 
-def search(world, start, frontier_class):
+def search(world, start, goals, portals, frontier_class, pruning_method):
     frontier = frontier_class(start)
     visited = {start}
 
@@ -63,14 +66,13 @@ def search(world, start, frontier_class):
 
         path = frontier.get_next()
         (x, y) = current = path[len(path) - 1]
-        goals = find(world, 'g')
 
         if current in goals:
             output(world, visited, path)
             return path
 
         else:
-            pruned_neighbours = [n for n in get_free_neighbours(world, x, y) if n not in visited]
+            pruned_neighbours = pruning_method(path, get_free_neighbours(world, portals, x, y), visited)
 
             output(world, visited, path, pruned_neighbours)
 
@@ -78,6 +80,14 @@ def search(world, start, frontier_class):
 
             for n in pruned_neighbours:
                 visited.add(n)
+
+
+def circle_checking(path, neighbours, visited):
+    return [n for n in neighbours if n not in path]
+
+
+def multiple_path_pruning(path, neighbours, visited):
+    return [n for n in neighbours if n not in visited]
 
 
 def find(world, value):
@@ -94,9 +104,35 @@ def find(world, value):
     return results
 
 
-def get_free_neighbours(world, x, y):
-    a = [(x-1, y), (x, y-1), (x+1, y), (x, y+1)]  # l,o,r,u
-    return [n for n in a if get_field(world, n[0], n[1]) != 'x']
+def find_portals(world):
+    result = {}
+
+    for n in range(10):
+        portals = find(world, str(n))
+
+        if len(portals) == 0:
+            continue
+
+        [a, b] = portals
+
+        result[a] = b
+        result[b] = a
+
+    return result
+
+
+def teleport(position, portals):
+    if position in portals:
+        return portals[position]
+    else:
+        return position
+
+
+def get_free_neighbours(world, portals, x, y):
+    direct_neighbours = [(x-1, y), (x, y-1), (x+1, y), (x, y+1)]  # l,o,r,u
+    neighbours = [teleport(p, portals) for p in direct_neighbours]  # portals
+
+    return [n for n in neighbours if get_field(world, n[0], n[1]) != 'x']
 
 
 def get_field(world, x, y):
