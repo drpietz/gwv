@@ -9,7 +9,8 @@ def main():
     goals = find(world, 'g')
     portals = find_portals(world)
 
-    search(world, start, portals, QueueFrontier, multiple_path_pruning)
+    # Uncomment first line for breadth first or second line for depth first
+    search(world, start, goals, portals, QueueFrontier, multiple_path_pruning)
     # search(world, start, goals, portals, StackFrontier, circle_checking)
 
 
