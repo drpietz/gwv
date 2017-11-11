@@ -1,0 +1,57 @@
+Breitensuche findet optimale Lösung, Tiefensuche läuft unendlich:
+
+sx
+xg
+ x
+
+
+
+Tiefen- und Breitensuche laufen unendlich:
+
+sx
+xgx
+ x
+
+
+
+Tiefen- und Breitensuche finden keine Lösung:
+
+Variante 1:
+
+xxxxx
+xsxgx
+xxxxx
+
+
+Variante 2:
+
+xxxxxxx
+xs    x
+x  x  x
+x xgx x
+x  x  x
+x     x
+xxxxxxx
+
+
+
+Tiefen- und Breitensuche finden eine Lösung, Tiefensuche aber nie optimal:
+
+xxxxxx
+x    x
+x s  x
+x  g x
+x    x
+xxxxxx
+
+
+
+Tiefensuche findet ein Ziel in 3 Schritten, Breitensuche braucht länger
+
+   g
+
+
+g  s  g
+
+
+   g
