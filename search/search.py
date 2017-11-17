@@ -2,19 +2,26 @@ import copy
 import time
 
 
+world = [[]]
+goals = []
+portals = {}
+
+
 def main():
+    global world, goals, portals
+
     f = open("blatt3_environment.txt", "r")
     world = [list(line.rstrip()) for line in f]
-    start = find(world, "s")[0]
-    goals = find(world, 'g')
-    portals = find_portals(world)
+    start = find("s")[0]
+    goals = find('g')
+    portals = find_portals()
 
     # Uncomment first line for breadth first or second line for depth first
-    search(world, start, goals, portals, QueueFrontier, multiple_path_pruning)
-    # search(world, start, goals, portals, StackFrontier, circle_checking)
+    search(start, QueueFrontier, multiple_path_pruning)
+    # search(start, StackFrontier, circle_checking)
 
 
-def output(world, visited, path, neighbours=None):
+def output(visited, path, neighbours=None):
     if neighbours is None:
         neighbours = {}
 
@@ -61,7 +68,7 @@ def in_frontier(position, frontier):
     return False
 
 
-def search(world, start, goals, portals, frontier_class, pruning_method):
+def search(start, frontier_class, pruning_method):
     frontier = frontier_class(start)
     visited = {start}
 
@@ -76,9 +83,9 @@ def search(world, start, goals, portals, frontier_class, pruning_method):
             return path
 
         else:
-            pruned_neighbours = pruning_method(path, get_free_neighbours(world, portals, x, y), visited)
+            pruned_neighbours = pruning_method(path, get_free_neighbours(x, y), visited)
 
-            output(world, visited, path, pruned_neighbours)
+            output(visited, path, pruned_neighbours)
 
             frontier.add(path, pruned_neighbours)
 
@@ -94,7 +101,7 @@ def multiple_path_pruning(path, neighbours, visited):
     return [n for n in neighbours if n not in visited]
 
 
-def find(world, value):
+def find(value):
     results = list()
 
     for y in range(len(world)):
@@ -108,16 +115,16 @@ def find(world, value):
     return results
 
 
-def find_portals(world):
+def find_portals():
     result = {}
 
     for n in range(10):
-        portals = find(world, str(n))
+        portal = find(str(n))
 
-        if len(portals) == 0:
+        if len(portal) == 0:
             continue
 
-        [a, b] = portals
+        [a, b] = portal
 
         result[a] = b
         result[b] = a
@@ -125,21 +132,21 @@ def find_portals(world):
     return result
 
 
-def teleport(position, portals):
+def teleport(position):
     if position in portals:
         return portals[position]
     else:
         return position
 
 
-def get_free_neighbours(world, portals, x, y):
+def get_free_neighbours(x, y):
     direct_neighbours = [(x-1, y), (x, y-1), (x+1, y), (x, y+1)]  # l,o,r,u
-    neighbours = [teleport(p, portals) for p in direct_neighbours]  # portals
+    neighbours = [teleport(p) for p in direct_neighbours]  # portals
 
-    return [n for n in neighbours if get_field(world, n[0], n[1]) != 'x']
+    return [n for n in neighbours if get_field(n[0], n[1]) != 'x']
 
 
-def get_field(world, x, y):
+def get_field(x, y):
     if y < 0 or y >= len(world) or x < 0 or x >= len(world[0]):
         return ' '
     else:
