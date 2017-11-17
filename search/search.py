@@ -97,12 +97,37 @@ def search(start, frontier_class, pruning_method):
 
 
 def f(path):
-    return c(path) + h(path)
+    return c(path) + h2(path)
 
 
 def h(path):
     a = path[-1]
     return manhattan_distance(a, min(goals, key=lambda b: manhattan_distance(a, b)))
+
+
+def h2(path):
+    neighbours = list(portals.keys()) + goals
+
+    frontier = [(0, [path[-1]])]  # (c, p)
+    while len(frontier) > 0:
+        (cost, path) = min(frontier, key=lambda e: e[0])
+        frontier.remove((cost, path))
+        position = path[-1]
+
+        if position in goals:
+            return cost
+
+        for neighbour in neighbours:
+            new_cost = cost
+            if neighbour == position:
+                new_cost += 2
+            else:
+                new_cost += manhattan_distance(position, neighbour)
+
+            new_path = path[:]
+            new_path.append(teleport(neighbour))
+
+            frontier.append((new_cost, new_path))
 
 
 def manhattan_distance(a, b):
