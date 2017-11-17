@@ -1,6 +1,8 @@
 import copy
 import time
 
+import math
+
 
 world = [[]]
 goals = []
@@ -10,15 +12,16 @@ portals = {}
 def main():
     global world, goals, portals
 
-    f = open("blatt3_environment.txt", "r")
-    world = [list(line.rstrip()) for line in f]
+    file = open("blatt3_environment.txt", "r")
+    world = [list(line.rstrip()) for line in file]
     start = find("s")[0]
     goals = find('g')
     portals = find_portals()
 
     # Uncomment first line for breadth first or second line for depth first
-    search(start, QueueFrontier, multiple_path_pruning)
+    # search(start, QueueFrontier, multiple_path_pruning)
     # search(start, StackFrontier, circle_checking)
+    search(start, PriorityQueue, multiple_path_pruning)
 
 
 def output(visited, path, neighbours=None):
@@ -73,13 +76,13 @@ def search(start, frontier_class, pruning_method):
     visited = {start}
 
     while not frontier.is_empty():
-        time.sleep(1)
+        time.sleep(0.1)
 
         path = frontier.get_next()
         (x, y) = current = path[len(path) - 1]
 
         if current in goals:
-            output(world, visited, path)
+            output(visited, path)
             return path
 
         else:
@@ -91,6 +94,23 @@ def search(start, frontier_class, pruning_method):
 
             for n in pruned_neighbours:
                 visited.add(n)
+
+
+def f(path):
+    return c(path) + h(path)
+
+
+def h(path):
+    a = path[-1]
+    return manhattan_distance(a, min(goals, key=lambda b: manhattan_distance(a, b)))
+
+
+def manhattan_distance(a, b):
+    return math.fabs(a[0] - b[0]) + math.fabs(a[1] - b[1])
+
+
+def c(path):
+    return len(path)
 
 
 def circle_checking(path, neighbours, visited):
@@ -154,17 +174,6 @@ def get_field(x, y):
 
 
 class Frontier:
-    def is_empty(self):
-        return False
-
-    def get_next(self):
-        return []
-
-    def add(self, path, extensions):
-        return
-
-
-class QueueFrontier(Frontier):
     def __init__(self, start):
         self.content = [[start]]
 
@@ -178,24 +187,31 @@ class QueueFrontier(Frontier):
         for extension in extensions:
             new_path = path[:]
             new_path.append(extension)
-            self.content.append(new_path)
+            self.add_path(new_path)
+
+    def add_path(self, path):
+        return
+
+
+class QueueFrontier(Frontier):
+    def add_path(self, path):
+        self.content.append(path)
 
 
 class StackFrontier(Frontier):
-    def __init__(self, start):
-        self.content = [[start]]
+    def add_path(self, path):
+        self.content.insert(0, path)
 
-    def is_empty(self):
-        return len(self.content) == 0
 
+class PriorityQueue(Frontier):
     def get_next(self):
-        return self.content.pop(0)
+        path = min(self.content, key=f)
+        self.content.remove(path)
 
-    def add(self, path, extensions):
-        for extension in reversed(extensions):
-            new_path = path[:]
-            new_path.append(extension)
-            self.content.insert(0, new_path)
+        return path
+
+    def add_path(self, path):
+        self.content.append(path)
 
 
 if __name__ == "__main__":
