@@ -1,7 +1,17 @@
-import copy
+from enum import Enum
 import time
 
 import math
+
+
+class Color(Enum):
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN = '\033[36m'
+    GREY = '\033[37m'
 
 
 world = [[]]
@@ -12,7 +22,7 @@ portals = {}
 def main():
     global world, goals, portals
 
-    file = open("blatt3_environment.txt", "r")
+    file = open("blatt4_environment_b.txt", "r")
     world = [list(line.rstrip()) for line in file]
     start = find("s")[0]
     goals = find('g')
@@ -28,26 +38,45 @@ def output(visited, path, neighbours=None):
     if neighbours is None:
         neighbours = {}
 
-    display = copy.deepcopy(world)
+    display = create_output_field()
 
-    put(display, '-', visited)
-    drawPath(display, path)
-    put(display, '#', neighbours)
+    set_output_cells(display, visited, '-', Color.BLUE)
+    set_output_cells(display, neighbours, '#', Color.RED)
+    draw_path(display, path, Color.YELLOW)
+
+    set_output_colors(display, goals, Color.MAGENTA)
+    set_output_colors(display, portals, Color.CYAN)
 
     print_colorized(display)
 
 
-def put(matrix, value, positions):
-    height = len(matrix)
-    width = len(matrix[1])
+def create_output_field():
+    return [[(cell, None) for cell in row] for row in world]
+
+
+def set_output_cells(display, positions, value, color):
+    set_output_values(display, positions, value)
+    set_output_colors(display, positions, color)
+
+
+def set_output_colors(display, positions, color):
+    for (x, y) in positions:
+        (value, _) = display[y][x]
+        display[y][x] = (value, color)
+
+
+def set_output_values(display, positions, value):
+    height = len(display)
+    width = len(display[1])
     for (x, y) in positions:
         if x in range(width) and y in range(height):
-            matrix[y][x] = value
+            _, color = display[y][x]
+            display[y][x] = (value, color)
 
 
-def drawPath(matrix, path):
+def draw_path(display, path, color):
     if len(path) == 1:
-        put(matrix, '┼', path)
+        set_output_cells(display, path, '┼', color)
         return
 
     symbols = [
@@ -67,27 +96,21 @@ def drawPath(matrix, path):
 
         if horizontal == 1 and vertical == 1:
             if p_x != n_x:
-                put(matrix, '─', [current])
+                set_output_cells(display, [current], '─', color)
             else:
-                put(matrix, '│', [current])
+                set_output_cells(display, [current], '│', color)
 
         else:
-            put(matrix, symbols[vertical][horizontal], [current])
+            set_output_cells(display, [current], symbols[vertical][horizontal], color)
 
 
-def print_colorized(matrix):
-    colors = {
-        '-': '\033[34m',
-        '#': '\033[31m',
-        'x': '\033[37m'
-    }
-
-    for row in matrix:
-        for cell in row:
-            if cell in colors:
-                print(colors[cell] + cell + '\033[0m', end='')
+def print_colorized(display):
+    for row in display:
+        for (value, color) in row:
+            if color is None:
+                print(value, end='')
             else:
-                print(cell, end='')
+                print(color.value + value + '\033[0m', end='')
 
         print()
 
