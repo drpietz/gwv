@@ -11,22 +11,24 @@ class Color(Enum):
     BLUE = '\033[34m'
     MAGENTA = '\033[35m'
     CYAN = '\033[36m'
-    GREY = '\033[37m'
+    GREY = '\033[1;30m'
 
 
 world = [[]]
 goals = []
 portals = {}
+walls = []
 
 
 def main():
-    global world, goals, portals
+    global world, goals, portals, walls
 
     file = open("blatt4_environment_b.txt", "r")
     world = [list(line.rstrip()) for line in file]
     start = find("s")[0]
     goals = find('g')
     portals = find_portals()
+    walls = find('x')
 
     # Uncomment first line for breadth first or second line for depth first
     # search(start, QueueFrontier, multiple_path_pruning)
@@ -40,12 +42,14 @@ def output(visited, path, neighbours=None):
 
     display = create_output_field()
 
+    set_output_cells(display, walls, '░', Color.GREY)  # ░▒▓█
+
     set_output_cells(display, visited, '-', Color.BLUE)
     set_output_cells(display, neighbours, '#', Color.RED)
     draw_path(display, path, Color.YELLOW)
 
     set_output_colors(display, goals, Color.MAGENTA)
-    set_output_colors(display, portals, Color.CYAN)
+    set_output_colors(display, portals, Color.GREEN)
 
     print_colorized(display)
 
