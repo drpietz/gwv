@@ -27,6 +27,9 @@ def main():
 
 
 def search(start, frontier_class, pruning_method):
+    max_nodes_in_frontier = 0
+    max_paths_in_frontier = 0
+    iteration_count = 1
     frontier = frontier_class(start)
     visited = {start}
 
@@ -38,6 +41,11 @@ def search(start, frontier_class, pruning_method):
 
         if current in goals:
             output(visited, path)
+            print()
+            print("Iterations: " + str(iteration_count))
+            print("Path length: " + str(len(path)))
+            print("Max. paths in frontier: " + str(max_paths_in_frontier))
+            print("Max. nodes in frontier: " + str(max_nodes_in_frontier))
             return path
 
         else:
@@ -50,9 +58,13 @@ def search(start, frontier_class, pruning_method):
             for n in pruned_neighbours:
                 visited.add(n)
 
+        iteration_count += 1
+        max_nodes_in_frontier = max(max_nodes_in_frontier, sum([len(p) for p in frontier]))
+        max_paths_in_frontier = max(max_paths_in_frontier, len(frontier))
+
 
 def get_free_neighbours(x, y):
-    direct_neighbours = [(x-1, y), (x, y-1), (x+1, y), (x, y+1)]  # l,o,r,u
+    direct_neighbours = [(x, y-1), (x+1, y), (x, y+1), (x-1, y)]  # l,o,r,u
     neighbours = [teleport(p) for p in direct_neighbours]  # portals
 
     return [n for n in neighbours if get_field(n[0], n[1]) != 'x']
@@ -157,6 +169,12 @@ class Frontier:
     def __init__(self, start):
         self.content = [[start]]
 
+    def __iter__(self):
+        return iter(self.content)
+
+    def __len__(self):
+        return len(self.content)
+
     def is_empty(self):
         return len(self.content) == 0
 
@@ -164,23 +182,24 @@ class Frontier:
         return self.content.pop(0)
 
     def add(self, path, extensions):
+        new_paths = []
         for extension in extensions:
-            new_path = path[:]
-            new_path.append(extension)
-            self.add_path(new_path)
+            new_paths.append(path[:] + [extension])
 
-    def add_path(self, path):
+        self.add_paths(new_paths)
+
+    def add_paths(self, paths):
         return
 
 
 class QueueFrontier(Frontier):
-    def add_path(self, path):
-        self.content.append(path)
+    def add_paths(self, paths):
+        self.content = self.content + paths
 
 
 class StackFrontier(Frontier):
-    def add_path(self, path):
-        self.content.insert(0, path)
+    def add_paths(self, paths):
+        self.content = paths + self.content
 
 
 class PriorityQueue(Frontier):
@@ -190,8 +209,8 @@ class PriorityQueue(Frontier):
 
         return path
 
-    def add_path(self, path):
-        self.content.append(path)
+    def add_paths(self, paths):
+        self.content = self.content + paths
 
 
 class Color(Enum):
@@ -233,8 +252,9 @@ def set_output_cells(display, positions, value, color):
 
 def set_output_colors(display, positions, color):
     for (x, y) in positions:
-        (value, _) = display[y][x]
-        display[y][x] = (value, color)
+        if x in range(len(display[1])) and y in range(len(display)):
+            (value, _) = display[y][x]
+            display[y][x] = (value, color)
 
 
 def set_output_values(display, positions, value):
@@ -262,7 +282,10 @@ def draw_path(display, path, color):
         horizontal = p_x + n_x - 2*c_x + 1
         vertical = p_y + n_y - 2*c_y + 1
 
-        if horizontal == 1 and vertical == 1:
+        if horizontal not in range(3) or vertical not in range(3):
+            set_output_cells(display, [current], '┼', color)
+
+        elif horizontal == 1 and vertical == 1:
             if p_x != n_x:
                 set_output_cells(display, [current], '─', color)
             elif p_y != n_y:
