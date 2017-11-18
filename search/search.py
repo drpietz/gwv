@@ -75,10 +75,6 @@ def set_output_values(display, positions, value):
 
 
 def draw_path(display, path, color):
-    if len(path) == 1:
-        set_output_cells(display, path, '┼', color)
-        return
-
     symbols = [
         ['╯', '╵', '╰'],
         ['╴', ' ', '╶'],
@@ -87,9 +83,9 @@ def draw_path(display, path, color):
 
     temp_path = [path[0]] + path + [path[-1]]
     for i in range(1, len(temp_path) - 1):
-        (p_x, p_y) = previous = temp_path[i-1]
         (c_x, c_y) = current = temp_path[i]
-        (n_x, n_y) = next = temp_path[i+1]
+        (p_x, p_y) = previous = current if current in portals else temp_path[i-1]
+        (n_x, n_y) = next = current if i == len(temp_path) - 2 else teleport(temp_path[i+1]) if temp_path[i+1] in portals else temp_path[i+1]
 
         horizontal = p_x + n_x - 2*c_x + 1
         vertical = p_y + n_y - 2*c_y + 1
@@ -97,8 +93,10 @@ def draw_path(display, path, color):
         if horizontal == 1 and vertical == 1:
             if p_x != n_x:
                 set_output_cells(display, [current], '─', color)
-            else:
+            elif p_y != n_y:
                 set_output_cells(display, [current], '│', color)
+            else:
+                set_output_cells(display, [current], '┼', color)
 
         else:
             set_output_cells(display, [current], symbols[vertical][horizontal], color)
