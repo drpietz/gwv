@@ -1,20 +1,25 @@
 from enum import Enum
 import time
-
 import math
+import itertools
 
 
 world = [[]]
+width = 0
+height = 0
 goals = []
 portals = {}
 walls = []
 
 
 def main():
-    global world, goals, portals, walls
+    global world, width, height, goals, portals, walls
 
     file = open("blatt4_environment_b.txt", "r")
     world = [list(line.rstrip()) for line in file]
+    width = len(world[0])
+    height = len(world)
+
     start = find("s")[0]
     goals = find('g')
     portals = find_portals()
@@ -30,6 +35,7 @@ def search(start, frontier_class, pruning_method):
     max_nodes_in_frontier = 0
     max_paths_in_frontier = 0
     iteration_count = 1
+
     frontier = frontier_class(start)
     visited = {start}
 
@@ -37,58 +43,49 @@ def search(start, frontier_class, pruning_method):
         time.sleep(0.1)
 
         path = frontier.get_next()
-        (x, y) = current = path[len(path) - 1]
+        (x, y) = current = path[-1]
 
-        if current in goals:
+        if current not in goals:
+            pruned_neighbours = pruning_method(path, get_free_neighbours(x, y), visited)
+
+            output(visited, path, pruned_neighbours)
+
+            frontier.add(path, pruned_neighbours)
+            visited.update(pruned_neighbours)
+
+        else:
             output(visited, path)
             print()
             print("Iterations: " + str(iteration_count))
             print("Path length: " + str(len(path)))
             print("Max. paths in frontier: " + str(max_paths_in_frontier))
             print("Max. nodes in frontier: " + str(max_nodes_in_frontier))
-            return path
-
-        else:
-            pruned_neighbours = pruning_method(path, get_free_neighbours(x, y), visited)
-
-            output(visited, path, pruned_neighbours)
-
-            frontier.add(path, pruned_neighbours)
-
-            for n in pruned_neighbours:
-                visited.add(n)
 
         iteration_count += 1
         max_nodes_in_frontier = max(max_nodes_in_frontier, sum([len(p) for p in frontier]))
         max_paths_in_frontier = max(max_paths_in_frontier, len(frontier))
 
 
+def in_bounds(x, y):
+    return y in range(len(world)) and x in range(len(world[0]))
+
+
 def get_free_neighbours(x, y):
-    direct_neighbours = [(x, y-1), (x+1, y), (x, y+1), (x-1, y)]  # l,o,r,u
+    direct_neighbours = [(x-1, y), (x, y-1), (x+1, y), (x, y+1)]  # l,o,r,u
     neighbours = [teleport(p) for p in direct_neighbours]  # portals
 
     return [n for n in neighbours if get_field(n[0], n[1]) != 'x']
 
 
 def get_field(x, y):
-    if y < 0 or y >= len(world) or x < 0 or x >= len(world[0]):
-        return ' '
-    else:
+    if in_bounds(x, y):
         return world[y][x]
+    else:
+        return ' '
 
 
 def find(value):
-    results = list()
-
-    for y in range(len(world)):
-        line = world[y]
-        for x in range(len(line)):
-            field = line[x]
-
-            if field == value:
-                results.append((x, y))
-
-    return results
+    return [(x, y) for x, y in itertools.product(range(width), range(height)) if get_field(x, y) == value]
 
 
 def find_portals():
@@ -252,16 +249,14 @@ def set_output_cells(display, positions, value, color):
 
 def set_output_colors(display, positions, color):
     for (x, y) in positions:
-        if x in range(len(display[1])) and y in range(len(display)):
+        if in_bounds(x, y):
             (value, _) = display[y][x]
             display[y][x] = (value, color)
 
 
 def set_output_values(display, positions, value):
-    height = len(display)
-    width = len(display[1])
     for (x, y) in positions:
-        if x in range(width) and y in range(height):
+        if in_bounds(x, y):
             _, color = display[y][x]
             display[y][x] = (value, color)
 
