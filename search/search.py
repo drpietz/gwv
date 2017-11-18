@@ -31,7 +31,7 @@ def output(visited, path, neighbours=None):
     display = copy.deepcopy(world)
 
     put(display, '-', visited)
-    put(display, '+', path)
+    drawPath(display, path)
     put(display, '#', neighbours)
 
     print_colorized(display)
@@ -45,10 +45,39 @@ def put(matrix, value, positions):
             matrix[y][x] = value
 
 
+def drawPath(matrix, path):
+    if len(path) == 1:
+        put(matrix, '┼', path)
+        return
+
+    symbols = [
+        ['╯', '╵', '╰'],
+        ['╴', ' ', '╶'],
+        ['╮', '╷', '╭']
+    ]
+
+    temp_path = [path[0]] + path + [path[-1]]
+    for i in range(1, len(temp_path) - 1):
+        (p_x, p_y) = previous = temp_path[i-1]
+        (c_x, c_y) = current = temp_path[i]
+        (n_x, n_y) = next = temp_path[i+1]
+
+        horizontal = p_x + n_x - 2*c_x + 1
+        vertical = p_y + n_y - 2*c_y + 1
+
+        if horizontal == 1 and vertical == 1:
+            if p_x != n_x:
+                put(matrix, '─', [current])
+            else:
+                put(matrix, '│', [current])
+
+        else:
+            put(matrix, symbols[vertical][horizontal], [current])
+
+
 def print_colorized(matrix):
     colors = {
         '-': '\033[34m',
-        '+': '\033[33m',
         '#': '\033[31m',
         'x': '\033[37m'
     }
