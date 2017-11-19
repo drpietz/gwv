@@ -55,15 +55,21 @@ def search(start, frontier_class, pruning_method):
 
         else:
             output(visited, path)
-            print()
-            print("Iterations: " + str(iteration_count))
-            print("Path length: " + str(len(path)))
-            print("Max. paths in frontier: " + str(max_paths_in_frontier))
-            print("Max. nodes in frontier: " + str(max_nodes_in_frontier))
+            print_metrics(iteration_count, len(path), max_paths_in_frontier, max_nodes_in_frontier)
+            return
 
         iteration_count += 1
         max_nodes_in_frontier = max(max_nodes_in_frontier, sum([len(p) for p in frontier]))
         max_paths_in_frontier = max(max_paths_in_frontier, len(frontier))
+
+    print_metrics(iteration_count, '-', max_paths_in_frontier, max_nodes_in_frontier)
+
+
+def print_metrics(iteration_count, path_length, max_paths_in_frontier, max_nodes_in_frontier):
+    print("Iterations: " + str(iteration_count))
+    print("Path length: " + str(path_length))
+    print("Max. paths in frontier: " + str(max_paths_in_frontier))
+    print("Max. nodes in frontier: " + str(max_nodes_in_frontier))
 
 
 def in_bounds(x, y):
@@ -236,6 +242,7 @@ def output(visited, path, neighbours=None):
     set_output_colors(display, portals, Color.GREEN)
 
     print_colorized(display)
+    print()
 
 
 def create_output_field():
