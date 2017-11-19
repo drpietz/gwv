@@ -25,13 +25,14 @@ def main():
     portals = find_portals()
     walls = find('x')
 
-    # Uncomment first line for breadth first or second line for depth first
-    # search(start, QueueFrontier, multiple_path_pruning)
-    # search(start, StackFrontier, circle_checking)
-    search(start, PriorityQueue, multiple_path_pruning)
+    # search(start, QueueFrontier, multiple_path_pruning)  # Breadth first
+    # search(start, StackFrontier, circle_checking)  # Depth first
+    search(start, PriorityQueue, multiple_path_pruning)  # A*
+    # search(start, PriorityQueue, circle_checking, False, True)  # A* all paths
 
 
-def search(start, frontier_class, pruning_method):
+def search(start, frontier_class, pruning_method, view_steps=True, all_paths=False):
+    paths_found = 0
     max_nodes_in_frontier = 0
     max_paths_in_frontier = 0
     iteration_count = 1
@@ -40,29 +41,36 @@ def search(start, frontier_class, pruning_method):
     visited = {start}
 
     while not frontier.is_empty():
-        time.sleep(0.1)
-
         path = frontier.get_next()
         (x, y) = current = path[-1]
 
         if current not in goals:
             pruned_neighbours = pruning_method(path, get_free_neighbours(x, y), visited)
 
-            output(visited, path, pruned_neighbours)
+            if view_steps:
+                output(visited, path, pruned_neighbours)
+                time.sleep(0.1)
 
             frontier.add(path, pruned_neighbours)
             visited.update(pruned_neighbours)
 
         else:
+            paths_found += 1
             output(visited, path)
             print_metrics(iteration_count, len(path), max_paths_in_frontier, max_nodes_in_frontier)
-            return
+
+            if all_paths:
+                time.sleep(0.1)
+            else:
+                return
 
         iteration_count += 1
         max_nodes_in_frontier = max(max_nodes_in_frontier, sum([len(p) for p in frontier]))
         max_paths_in_frontier = max(max_paths_in_frontier, len(frontier))
 
     print_metrics(iteration_count, '-', max_paths_in_frontier, max_nodes_in_frontier)
+    if all_paths:
+        print("Paths found: " + str(paths_found))
 
 
 def print_metrics(iteration_count, path_length, max_paths_in_frontier, max_nodes_in_frontier):
@@ -70,6 +78,7 @@ def print_metrics(iteration_count, path_length, max_paths_in_frontier, max_nodes
     print("Path length: " + str(path_length))
     print("Max. paths in frontier: " + str(max_paths_in_frontier))
     print("Max. nodes in frontier: " + str(max_nodes_in_frontier))
+    print()
 
 
 def in_bounds(x, y):
