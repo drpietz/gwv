@@ -77,7 +77,7 @@ def score(tag_map, inputs, targets):
         if prediction == target:
             correct += 1
 
-    print("Scoring took {:.01f}s".format(time.time() - start))
+    print("Scoring took {:.03f}s".format(time.time() - start))
 
     return correct / len(inputs)
 
@@ -111,6 +111,8 @@ def predict(tag_map, inputs):
     #   ...
     # ]
 
+    best_tag_probabilites = [{} for _ in range(len(inputs))]
+
     best_probability = 0
     best_tags = []
 
@@ -125,6 +127,7 @@ def predict(tag_map, inputs):
             best_tags = previous_tags
             continue
 
+        index = len(previous_tags) - 1
         prev_tag = previous_tags[-1]
         current_word = rest[0]
 
@@ -132,10 +135,14 @@ def predict(tag_map, inputs):
 
         for predicted_tag, predicted_tag_probability in sorted(word_predictions.items(), key=lambda p: p[1]):
             probability = previous_probability * predicted_tag_probability
-            tags = previous_tags[:]
-            tags.append(predicted_tag)
 
-            frontier.append((probability, tags, rest[1:]))
+            if best_tag_probabilites[index].get(predicted_tag, 0) < probability:
+                best_tag_probabilites[index][predicted_tag] = probability
+
+                tags = previous_tags[:]
+                tags.append(predicted_tag)
+
+                frontier.append((probability, tags, rest[1:]))
 
     return best_tags[1:], best_probability
 
