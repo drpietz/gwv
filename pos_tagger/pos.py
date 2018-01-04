@@ -1,20 +1,21 @@
+# Die Site Voteauction.com bietet Wählern in den USA an , ihre Stimme im Internet an den Meistbietenden zu verkaufen .
+
+
 # a = {
-#     'the': {
-#         '$.': {
+#     '$.': {
+#         'the': {
 #             'nn': 5,
 #             'vbd': 2
 #         }
 #     },
-#     None: {
-#         'det': {
+#     'det': {
+#         None: {
 #             'v': 5,
 #             'sub': 2
-#         },
-#         'v': {
-#
 #         }
 #     }
 # }
+import time
 
 
 class TagMap:
@@ -48,16 +49,53 @@ class TagMap:
 
 
 def main():
-    data = read_data('hdt-1-10000-train.tags')
-    tag_map = build_tag_map(data)
-    print(tag_map)
+    train_inputs, train_targets = read_data('hdt-1-10000-train.tags')
+    tag_map = build_tag_map(train_inputs, train_targets)
+
+    test_inputs, test_targets = read_data('hdt-10001-12000-test.tags')
+    model_score = score(tag_map, test_inputs[:50], test_targets[:50])
+    print('Model Accuracy: {:.01f}%\n\n'.format(model_score*100))
+
+    while True:
+        inputs = get_user_input()
+        predictions, probability = predict(tag_map, inputs)
+        print_prediction(inputs, predictions, probability)
 
 
-def build_tag_map(data):
+def get_user_input():
+    user_input = input('> ')
+    return user_input.split(' ')
+
+
+def score(tag_map, inputs, targets):
+    start = time.time()
+
+    predictions, _ = predict(tag_map, inputs)
+
+    correct = 0
+    for prediction, target in zip(predictions, targets):
+        if prediction == target:
+            correct += 1
+
+    print("Scoring took {:.01f}s".format(time.time() - start))
+
+    return correct / len(inputs)
+
+
+def print_prediction(words, predictions, probability):
+    print('{:.01f}%'.format(probability*100), end=" ")
+    for word, tag in zip(words, predictions):
+        print(word + "\\" + tag, end=" ")
+
+    print()
+    print()
+
+
+def build_tag_map(inputs, targets):
     tag_map = TagMap()
     prev_tag = '$.'
 
-    for word, tag in data:
+    for word, tag in zip(inputs, targets):
         tag_map.add(prev_tag, word, tag)
         tag_map.add(prev_tag, None, tag)
 
@@ -66,9 +104,50 @@ def build_tag_map(data):
     return tag_map
 
 
+def predict(tag_map, inputs):
+    frontier = [(1, ['$.'], inputs)]
+    # [
+    #   (0.3, ["ITJ", "APPO", "APPR"], ["bietet", "Wählern", "in", "den"]),
+    #   ...
+    # ]
+
+    best_probability = 0
+    best_tags = []
+
+    while len(frontier) > 0:
+        previous_probability, previous_tags, rest = frontier.pop()
+
+        if previous_probability <= best_probability:
+            continue
+
+        if len(rest) == 0 and previous_probability > best_probability:
+            best_probability = previous_probability
+            best_tags = previous_tags
+            continue
+
+        prev_tag = previous_tags[-1]
+        current_word = rest[0]
+
+        word_predictions = tag_map.predict(prev_tag, current_word)
+
+        for predicted_tag, predicted_tag_probability in sorted(word_predictions.items(), key=lambda p: p[1]):
+            probability = previous_probability * predicted_tag_probability
+            tags = previous_tags[:]
+            tags.append(predicted_tag)
+
+            frontier.append((probability, tags, rest[1:]))
+
+    return best_tags[1:], best_probability
+
+
 def read_data(tags):
     with open(tags, encoding='utf-8') as file:
-        return [tuple(line.rstrip('\n').split('\t')) for line in file if line != "\n"]
+        lines = [tuple(line.rstrip('\n').split('\t')) for line in file if line != "\n"]
+
+    words = [word for word, _ in lines]
+    tags = [tag for _, tag in lines]
+
+    return words, tags
 
 
 if __name__ == '__main__':
