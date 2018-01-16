@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>15-Puzzle</title>
+
+		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+
+		<style>
+			html, body {
+				width: 100%;
+				height: 100%;
+			}
+
+			body {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background-color: #395C6B;
+
+				margin: 0;
+
+				font-family: 'Roboto', sans-serif;
+			}
+
+			.board {
+				padding: 0.5rem;
+				width: 35rem;
+				height: 35rem;
+				background-color: #EBF5DF;
+				border-radius: 1rem;
+				border: 0.5rem solid #A3C4BC;
+				display: grid;
+				grid-template-rows: 25% 25% 25% 25%;
+				grid-template-columns: 25% 25% 25% 25%;
+			}
+
+			.cell {
+				font-size: 3rem;
+				color: rgba(0,0,0,0.5);
+
+				background-color: #A3C4BC;
+				border-radius: 1rem;
+				margin: 0.5rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+		</style>
+
+	</head>
+	<body>
+		<div class="board">
+			<div class="cell">1</div>
+			<div class="cell">2</div>
+			<div class="cell">3</div>
+			<div class="cell">4</div>
+			<div class="cell">5</div>
+			<div class="cell">6</div>
+			<div class="cell">7</div>
+			<div class="cell">8</div>
+			<div class="cell">9</div>
+			<div class="cell">10</div>
+			<div class="cell">11</div>
+			<div class="cell">12</div>
+			<div class="cell">13</div>
+			<div class="cell">14</div>
+			<div class="cell">15</div>
+			<div class="cell highlighted"></div>
+		</div>
+	</body>
+</html>
