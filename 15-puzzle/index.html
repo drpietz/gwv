@@ -5,6 +5,7 @@
 		<title>15-Puzzle</title>
 
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 		<style>
 			html, body {
@@ -36,8 +37,8 @@
 			}
 
 			.cell {
-				font-size: 3rem;
 				color: rgba(0,0,0,0.5);
+				font-size: 3rem;
 
 				background-color: #A3C4BC;
 				border-radius: 1rem;
@@ -46,27 +47,78 @@
 				align-items: center;
 				justify-content: center;
 			}
+
+			.controls {
+				margin-top: 5rem;
+
+				width: 100%;
+				height: 5rem;
+
+				background-color: #A3C4BC;
+				border-radius: 1rem;
+
+				display: grid;
+				grid-template-columns: 10rem 1fr 10rem;
+			}
+
+			.controls > * {
+				color: rgba(0,0,0,0.7);
+
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.button {
+				cursor: pointer;
+			}
+
+			.button-left {
+				border-right: 1px solid rgba(0,0,0,0.1);
+			}
+
+			.button-right {
+				border-left: 1px solid rgba(0,0,0,0.1);
+			}
+
+			.turns {
+				font-size: 1.5rem;
+			}
 		</style>
 
 	</head>
 	<body>
-		<div class="board">
-			<div class="cell">1</div>
-			<div class="cell">2</div>
-			<div class="cell">3</div>
-			<div class="cell">4</div>
-			<div class="cell">5</div>
-			<div class="cell">6</div>
-			<div class="cell">7</div>
-			<div class="cell">8</div>
-			<div class="cell">9</div>
-			<div class="cell">10</div>
-			<div class="cell">11</div>
-			<div class="cell">12</div>
-			<div class="cell">13</div>
-			<div class="cell">14</div>
-			<div class="cell">15</div>
-			<div class="cell highlighted"></div>
+		<div class="game">
+			<div class="board">
+				<div class="cell">1</div>
+				<div class="cell">2</div>
+				<div class="cell">3</div>
+				<div class="cell">4</div>
+				<div class="cell">5</div>
+				<div class="cell">6</div>
+				<div class="cell">7</div>
+				<div class="cell">8</div>
+				<div class="cell">9</div>
+				<div class="cell">10</div>
+				<div class="cell">11</div>
+				<div class="cell"></div>
+				<div class="cell">13</div>
+				<div class="cell">14</div>
+				<div class="cell">15</div>
+				<div class="cell">12</div>
+			</div>
+
+			<div class="controls">
+				<div class="button button-left">
+					<i class="material-icons">refresh</i>
+				</div>
+				<div class="turns">
+					32
+				</div>
+				<div class="button button-right">
+					<i class="material-icons">lightbulb_outline</i>
+				</div>
+			</div>
 		</div>
 	</body>
 </html>
