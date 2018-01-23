@@ -7,7 +7,7 @@
 		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script>
 
 		<style>
 			html, body {
@@ -107,128 +107,6 @@
 		</div>
 
 
-		<script>
-
-			const TRANSITION_UP = [0, -1];
-			const TRANSITION_DOWN = [0, +1];
-			const TRANSITION_LEFT = [-1, 0];
-			const TRANSITION_RIGHT = [+1, 0];
-
-			const state = [
-				[ 1,  2,  3,  4],
-				[ 5,  6,  7,  8],
-				[ 9, 10, 11, 16],
-				[13, 14, 15, 12]
-			];
-
-			const board = document.getElementById("board");
-
-
-			function showState(state) {
-				board.innerHTML = "";
-
-				state.forEach(function (row) {
-					row.forEach(function (cellValue) {
-						const cell = document.createElement("div");
-
-						if (cellValue === 16) {
-							cell.className = "cell empty";
-						} else {
-							cell.className = "cell";
-							cell.innerText = cellValue;
-						}
-
-						board.appendChild(cell);
-					});
-				});
-			}
-
-			function search(state, queue) {
-
-			}
-
-			class PriorityQueue {
-				constructor(heuristic) {
-					this.queue = [];
-					this.heuristic = heuristic;
-				}
-
-				add(state) {
-					const value = this.heuristic(state);
-					const searchState = {state, value};
-					const insertIndex = _.sortedIndex(this.queue, searchState, searchState => searchState.value);
-					this.queue.splice(insertIndex, 0, searchState);
-				}
-
-				pop() {
-					return this.queue.pop().state;
-				}
-			}
-
-			function h(state) {
-				let result = 0;
-
-				for (let value = 1; value <= 16; value++) {
-					const [cx, cy] = find(state, value);
-					const [tx, ty] = targetPosition(value);
-
-					result += Math.abs(cx - tx) + Math.abs(cy - ty);
-				}
-
-				return result;
-			}
-
-			function find(state, value) {
-				for (let y = 0; y < 4; y++) {
-					const idx = state[y].indexOf(value);
-					if (idx !== -1) {
-						return [idx, y]
-					}
-				}
-			}
-
-			function targetPosition(value) {
-				const x = (value - 1) % 4;
-				const y = Math.floor((value - 1) / 4);
-				return [x, y];
-			}
-			
-			function successorStates(state) {
-				return _.compact([
-					transition(state, TRANSITION_UP),
-					transition(state, TRANSITION_DOWN),
-					transition(state, TRANSITION_LEFT),
-					transition(state, TRANSITION_RIGHT),
-				]);
-			}
-
-			function transition(state, [dx, dy]) {
-				const [cx, cy] = find(state, 16);
-				const [nx, ny] = [cx+dx, cy+dy];
-
-				if (inField([nx, ny])) {
-					return swap(state, [cx, cy], [nx, ny]);
-				} else {
-					return null;
-				}
-			}
-
-			function swap(state, [ax, ay], [bx, by]) {
-				const copy = deepCopy(state);
-				copy[ay][ax] = state[by][bx];
-				copy[bx][by] = state[ay][ax];
-				return copy;
-			}
-
-			function inField([x, y]) {
-				return (x => 0 && x <= 3) && (y => 0 && y <= 3);
-			}
-
-			function deepCopy(val) {
-				return JSON.parse(JSON.stringify(val));
-			}
-
-			showState(state);
-		</script>
+		<script src="puzzle.js"></script>
 	</body>
 </html>
