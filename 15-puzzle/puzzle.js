@@ -4,6 +4,13 @@ const TRANSITION_DOWN = [0, +1];
 const TRANSITION_LEFT = [-1, 0];
 const TRANSITION_RIGHT = [+1, 0];
 
+const KEY_TRANSITIONS = {
+	"ArrowLeft": TRANSITION_LEFT,
+	"ArrowRight": TRANSITION_RIGHT,
+	"ArrowUp": TRANSITION_UP,
+	"ArrowDown": TRANSITION_DOWN
+};
+
 const GOAL_STATE = _.chunk(_.range(1, 17), 4);
 
 const board = document.getElementById("board");
@@ -14,15 +21,21 @@ hintButton.onclick = ev => {
 	solve();
 };
 
-var state = [
-	[ 1,  2,  3,  4],
-	[ 5,  6,  7,  8],
-	[ 9, 16, 11, 12],
-	[13, 10, 14, 15]
-];
+let boardState = GOAL_STATE;
+let turnCount = 0;
 
+function increaseTurnCount() {
+	turnView.innerText = ++turnCount;
+}
 
-function showState(state) {
+function resetTurnCount() {
+	turnView.innerText = 0;
+	turnCount = 0;
+}
+
+function publishState(state) {
+	increaseTurnCount();
+
 	board.innerHTML = "";
 
 	state.forEach(function (row) {
@@ -39,6 +52,8 @@ function showState(state) {
 			board.appendChild(cell);
 		});
 	});
+
+	boardState = state;
 }
 
 async function sleep(ms) {
@@ -51,6 +66,7 @@ async function search(startState) {
 	const frontier = new PriorityQueue(h);
 	frontier.add(startState);
 
+	let iterationCounter = 0;
 	while (!frontier.isEmpty()) {
 		console.log("Search iteration with frontier size " + frontier.length());
 		const state = frontier.pop();
@@ -66,6 +82,7 @@ async function search(startState) {
 			_.reverse(path);
 
 			console.log("Reconstructed path", path);
+			toast.toast("Found solution");
 			return path;
 		}
 
@@ -74,16 +91,22 @@ async function search(startState) {
 			if (!(neighbour in parentMap))
 				parentMap[neighbour] = state;
 		});
+
+		iterationCounter += 1;
+		if (iterationCounter > 2000) {
+			toast.toast("Stopped after 2000 iterations");
+			break;
+		}
 	}
 
-	console.log("No solution found");
+	toast.toast("No solution found");
 	return [];
 }
 
 async function solve() {
-	search(state).then(async path => {
+	search(boardState).then(async path => {
 		for (const node of path) {
-			showState(node);
+			publishState(node);
 			await sleep(300);
 		}
 	});
@@ -108,7 +131,6 @@ class PriorityQueue {
 
 	pop() {
 		const searchState = this.queue.shift();
-		turnView.text = searchState.value;
 		return searchState.state;
 	}
 
@@ -180,4 +202,43 @@ function inField([x, y]) {
 	return (x >= 0 && x <= 3) && (y >= 0 && y <= 3);
 }
 
-showState(state);
+document.onkeydown = function (ev) {
+	const keyTransition = KEY_TRANSITIONS[ev.code];
+	if (keyTransition) {
+		const nextState = transition(boardState, keyTransition);
+		if (nextState)
+			publishState(nextState);
+	}
+};
+
+
+class Toast {
+	constructor() {
+		const list = document.createElement("ul");
+		list.className = "toast-list";
+		document.body.appendChild(list);
+		this.list = list;
+	}
+
+	toast(message) {
+		const messageItem = document.createElement("li");
+		messageItem.innerText = message;
+		this.list.appendChild(messageItem);
+		setTimeout(function () {
+			messageItem.className = "show";
+		}, 5);
+		setTimeout(_.bind(function () {
+			messageItem.className += " fade-out";
+			setTimeout(_.bind(function () {
+				this.list.removeChild(messageItem);
+			}, this), 250)
+		}, this), 1500);
+	}
+}
+
+
+publishState(boardState);
+resetTurnCount();
+
+const toast = new Toast();
+demoToasts();

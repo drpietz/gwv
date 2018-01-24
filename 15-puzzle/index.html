@@ -86,6 +86,37 @@
 			#turns {
 				font-size: 1.5rem;
 			}
+
+			.toast-list {
+				position: fixed;
+				bottom: 0;
+				list-style-type: none;
+				padding: 0;
+				margin: 0 0 1rem;
+			}
+
+			.toast-list > li {
+				display: flex;
+				align-items:  center;
+				justify-content: center;
+				background-color: #e4ca6a;
+				padding: 0 3rem;
+				min-width: 15rem;
+				margin-bottom: -4rem;
+				margin-top: 1rem;
+				border-radius: 0.25rem;
+				box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.5);
+				height: 3rem;
+				transition: margin-bottom 0.4s ease, opacity 0.2s ease-out;
+			}
+
+			.toast-list > li.show {
+				margin-bottom: 0;
+			}
+
+			.toast-list > li.fade-out {
+				opacity: 0;
+			}
 		</style>
 	</head>
 	<body>
