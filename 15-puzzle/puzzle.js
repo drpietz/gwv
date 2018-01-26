@@ -13,43 +13,45 @@ const KEY_TRANSITIONS = {
 
 const GOAL_STATE = _.chunk(_.range(1, 17), 4);
 
-const board = document.getElementById("board");
-const hintButton = document.getElementById("button-hint");
-const turnView = document.getElementById("turns");
+const $board = $('#board');
+const $hintButton = $('#button-hint');
+const $turnView = $('#turns');
 
-hintButton.onclick = ev => {
+$hintButton.click(() => {
 	solve();
-};
+});
 
 let boardState = GOAL_STATE;
 let turnCount = 0;
 
 function increaseTurnCount() {
-	turnView.innerText = ++turnCount;
+	$turnView.text(++turnCount);
 }
 
 function resetTurnCount() {
-	turnView.innerText = 0;
+	$turnView.text(0);
 	turnCount = 0;
 }
+
+const cells = [];
 
 function publishState(state) {
 	increaseTurnCount();
 
-	board.innerHTML = "";
+	$board.empty();
 
 	state.forEach(function (row) {
 		row.forEach(function (cellValue) {
-			const cell = document.createElement("div");
+			const $cell = $('<div>', {'class': 'cell'});
 
 			if (cellValue === 16) {
-				cell.className = "cell empty";
+				$cell.addClass('empty')
 			} else {
-				cell.className = "cell";
-				cell.innerText = cellValue;
+				$cell.text(cellValue);
 			}
 
-			board.appendChild(cell);
+			$board.append($cell);
+			cells.push($cell);
 		});
 	});
 
@@ -202,35 +204,35 @@ function inField([x, y]) {
 	return (x >= 0 && x <= 3) && (y >= 0 && y <= 3);
 }
 
-document.onkeydown = function (ev) {
-	const keyTransition = KEY_TRANSITIONS[ev.code];
+$(document).keydown(ev => {
+	const keyTransition = KEY_TRANSITIONS[ev.key];
 	if (keyTransition) {
 		const nextState = transition(boardState, keyTransition);
 		if (nextState)
 			publishState(nextState);
 	}
-};
+});
 
 
 class Toast {
 	constructor() {
-		const list = document.createElement("ul");
-		list.className = "toast-list";
-		document.body.appendChild(list);
-		this.list = list;
+		const $list = $('<ul>', {'class': 'toast-list'});
+		$('body').append($list);
+		this.$list = $list;
 	}
 
 	toast(message) {
-		const messageItem = document.createElement("li");
-		messageItem.innerText = message;
-		this.list.appendChild(messageItem);
+		const $messageItem = $('<li>');
+		$messageItem.text(message);
+		this.$list.append($messageItem);
+
 		setTimeout(function () {
-			messageItem.className = "show";
+			$messageItem.addClass('show');
 		}, 5);
 		setTimeout(_.bind(function () {
-			messageItem.className += " fade-out";
+			$messageItem.addClass('fade-out');
 			setTimeout(_.bind(function () {
-				this.list.removeChild(messageItem);
+				$messageItem.remove();
 			}, this), 250)
 		}, this), 1500);
 	}
@@ -241,4 +243,3 @@ publishState(boardState);
 resetTurnCount();
 
 const toast = new Toast();
-demoToasts();
