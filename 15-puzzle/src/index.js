@@ -9,10 +9,10 @@ import State from "./State";
 
 
 const KEY_TRANSITIONS = {
-	"ArrowLeft": TRANSITION_LEFT,
-	"ArrowRight": TRANSITION_RIGHT,
-	"ArrowUp": TRANSITION_UP,
-	"ArrowDown": TRANSITION_DOWN
+	"ArrowLeft": TRANSITION_RIGHT, // TRANSITION_LEFT,
+	"ArrowRight": TRANSITION_LEFT, // TRANSITION_RIGHT,
+	"ArrowUp": TRANSITION_DOWN, // TRANSITION_UP,
+	"ArrowDown": TRANSITION_UP // TRANSITION_DOWN
 };
 
 const game = new Game(new GameState(_.chunk(_.range(1, 17), 4)));
@@ -42,6 +42,55 @@ class Mapmap {
 		console.log("Key not found", key);
 		return null;
 	}
+
+	has(key) {
+		for (let k of this.keys) {
+			if (k.equals(key)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}
+
+
+class SearchGraph {
+	constructor(root) {
+		this.nodeMap = new Mapmap();
+		this.addChild(root, null);
+	}
+
+	addChild(child, parent) {
+		console.log("Add node" , child);
+		const parentNode = this.nodeMap.get(parent);
+		const childNode = new SearchNode(child, parentNode);
+		this.nodeMap.put(child, childNode);
+	}
+
+	has(value) {
+		return this.nodeMap.has(value);
+	}
+
+	getPath(value) {
+		let node = this.nodeMap.get(value);
+		const path = [node.value];
+
+		while (node.parent !== null) {
+			node = node.parent;
+			path.push(node.value);
+		}
+
+		_.reverse(path);
+		return path;
+	}
+}
+
+class SearchNode {
+	constructor(value, parent) {
+		this.value = value;
+		this.parent = parent;
+	}
 }
 
 
@@ -57,7 +106,7 @@ async function sleep(ms) {
 }
 
 async function search(startState) {
-	const parentMap = new Mapmap();
+	const graph = new SearchGraph(startState);
 
 	const frontier = new PriorityQueue(h);
 	frontier.add(startState);
@@ -69,45 +118,34 @@ async function search(startState) {
 		console.log("Search iteration with state", state);
 
 		if (state.isGoal()) {
-			const path = [state];
-
-			let backtrackingCounter = 0;
-			console.log('backtracking', parentMap);
-			while (!(_.last(path).equals(startState))) {
-				console.log("Backtracking path node " + path.length);
-				path.push(parentMap.get(_.last(path)));
-
-				if (backtrackingCounter++ >= 1000) {
-					console.log("Backtracking stopped");
-					return [];
-				}
-			}
-			_.reverse(path);
-
-			console.log("Reconstructed path", path);
-			toast.toast("Found solution");
-			return path;
+			return graph.getPath(state);
 		}
 
 		state.getSuccessorStates().forEach(function (neighbour) {
-			frontier.add(neighbour);
-			parentMap.put(neighbour, state);
+			if (!graph.has(neighbour)) {
+				frontier.add(neighbour);
+				graph.addChild(neighbour, state);
+			}
 		});
 
 		iterationCounter += 1;
-		if (iterationCounter > 2000) {
-			toast.toast("Stopped after 2000 iterations");
+		if (iterationCounter > 5000) {
+			console.log("Stopped search after reaching iteration limit");
 			break;
 		}
 	}
 
-	toast.toast("No solution found");
-	return [];
+	return null;
 }
 
 async function solve() {
 	search(board.getState()).then(async path => {
-		console.log(path);
+		if (path === null) {
+			toast.toast("No solution found");
+		} else {
+			toast.toast("Found path of length " + path.length)
+			console.log("Solution found", path);
+		}
 
 		for (const node of path) {
 			game.setState(node);
@@ -146,7 +184,7 @@ class PriorityQueue {
 function h(state) {
 	let result = 0;
 
-	for (let value = 1; value <= 16; value++) {
+	for (let value = 1; value < 16; value++) {
 		const [cx, cy] = state.find(value);
 		const [tx, ty] = State.targetPosition(value);
 
@@ -173,7 +211,7 @@ class Toast {
 		this.$list = $list;
 	}
 
-	toast(message) {
+	toast(message, duration=1500) {
 		const $messageItem = $('<li>');
 		$messageItem.text(message);
 		this.$list.append($messageItem);
@@ -186,7 +224,7 @@ class Toast {
 			setTimeout(_.bind(function () {
 				$messageItem.remove();
 			}, this), 250)
-		}, this), 1500);
+		}, this), duration);
 	}
 }
 
@@ -195,3 +233,44 @@ const toast = new Toast();
 controlPanel.onHint(() => {
 	solve();
 });
+
+
+
+
+async function runTests() {
+	test("Test A", [
+		[ 1,  2,  3,  4],
+		[ 5,  6,  7,  8],
+		[ 9, 10, 11, 12],
+		[13, 14, 15, 16]
+	]);
+
+	test("Test B", [
+		[ 1,  2,  3,  4],
+		[ 5, 10, 16,  7],
+		[ 9, 11,  6,  8],
+		[13, 14, 15, 12]
+	]);
+
+	test("Test C", [
+		[ 1,  2,  3,  4],
+		[ 5, 11, 10,  7],
+		[ 9, 16,  6,  8],
+		[13, 14, 15, 12]
+	]);
+
+}
+
+async function test(name, field) {
+	const state = new GameState(field);
+
+	search(state).then(result => {
+		if (result === null) {
+			toast.toast(name + " failed", 5000);
+		} else {
+			toast.toast(name + " succeeded with path length " + result.length, 5000);
+		}
+	});
+}
+
+runTests();
