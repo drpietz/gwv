@@ -1,3 +1,6 @@
+import $ from 'jquery';
+import _ from 'lodash';
+
 
 const TRANSITION_UP = [0, -1];
 const TRANSITION_DOWN = [0, +1];
