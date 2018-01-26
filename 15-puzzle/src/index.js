@@ -1,11 +1,12 @@
 import $ from 'jquery';
 import _ from 'lodash';
+import Board from './Board';
+import {TRANSITION_UP, TRANSITION_DOWN, TRANSITION_LEFT, TRANSITION_RIGHT} from "./transitions";
+import GameState from "./GameState";
+import Game from "./Game";
+import ControlPanel from "./ControlPanel";
+import State from "./State";
 
-
-const TRANSITION_UP = [0, -1];
-const TRANSITION_DOWN = [0, +1];
-const TRANSITION_LEFT = [-1, 0];
-const TRANSITION_RIGHT = [+1, 0];
 
 const KEY_TRANSITIONS = {
 	"ArrowLeft": TRANSITION_LEFT,
@@ -14,59 +15,49 @@ const KEY_TRANSITIONS = {
 	"ArrowDown": TRANSITION_DOWN
 };
 
-const GOAL_STATE = _.chunk(_.range(1, 17), 4);
+const game = new Game(new GameState(_.chunk(_.range(1, 17), 4)));
+const board = new Board(game.getState());
+const controlPanel = new ControlPanel(game);
 
-const $board = $('#board');
-const $hintButton = $('#button-hint');
-const $turnView = $('#turns');
 
-$hintButton.click(() => {
-	solve();
-});
+// TODO: Replace & remove
+class Mapmap {
+	constructor() {
+		this.keys = [];
+		this.values = [];
+	}
 
-let boardState = GOAL_STATE;
-let turnCount = 0;
+	put(key, value) {
+		this.keys.push(key);
+		this.values.push(value);
+	}
 
-function increaseTurnCount() {
-	$turnView.text(++turnCount);
-}
-
-function resetTurnCount() {
-	$turnView.text(0);
-	turnCount = 0;
-}
-
-const cells = [];
-
-function publishState(state) {
-	increaseTurnCount();
-
-	$board.empty();
-
-	state.forEach(function (row) {
-		row.forEach(function (cellValue) {
-			const $cell = $('<div>', {'class': 'cell'});
-
-			if (cellValue === 16) {
-				$cell.addClass('empty')
-			} else {
-				$cell.text(cellValue);
+	get(key) {
+		for (let i = 0; i < this.keys.length; i++) {
+			if (this.keys[i].equals(key)) {
+				return this.values[i];
 			}
+		}
 
-			$board.append($cell);
-			cells.push($cell);
-		});
-	});
-
-	boardState = state;
+		console.log("Key not found", key);
+		return null;
+	}
 }
+
+
+function updateBoard() {
+	console.log("Update board according to game state");
+	board.setState(game.getState());
+}
+
+game.onChange(updateBoard);
 
 async function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function search(startState) {
-	const parentMap = {};
+	const parentMap = new Mapmap();
 
 	const frontier = new PriorityQueue(h);
 	frontier.add(startState);
@@ -77,12 +68,19 @@ async function search(startState) {
 		const state = frontier.pop();
 		console.log("Search iteration with state", state);
 
-		if (isGoal(state)) {
+		if (state.isGoal()) {
 			const path = [state];
 
-			while (!_.isEqual(_.last(path), startState)) {
+			let backtrackingCounter = 0;
+			console.log('backtracking', parentMap);
+			while (!(_.last(path).equals(startState))) {
 				console.log("Backtracking path node " + path.length);
-				path.push(parentMap[_.last(path)]);
+				path.push(parentMap.get(_.last(path)));
+
+				if (backtrackingCounter++ >= 1000) {
+					console.log("Backtracking stopped");
+					return [];
+				}
 			}
 			_.reverse(path);
 
@@ -91,10 +89,9 @@ async function search(startState) {
 			return path;
 		}
 
-		successorStates(state).forEach(function (neighbour) {
+		state.getSuccessorStates().forEach(function (neighbour) {
 			frontier.add(neighbour);
-			if (!(neighbour in parentMap))
-				parentMap[neighbour] = state;
+			parentMap.put(neighbour, state);
 		});
 
 		iterationCounter += 1;
@@ -109,16 +106,14 @@ async function search(startState) {
 }
 
 async function solve() {
-	search(boardState).then(async path => {
+	search(board.getState()).then(async path => {
+		console.log(path);
+
 		for (const node of path) {
-			publishState(node);
+			game.setState(node);
 			await sleep(300);
 		}
 	});
-}
-
-function isGoal(state) {
-	return _.isEqual(state, GOAL_STATE);
 }
 
 class PriorityQueue {
@@ -152,8 +147,8 @@ function h(state) {
 	let result = 0;
 
 	for (let value = 1; value <= 16; value++) {
-		const [cx, cy] = find(state, value);
-		const [tx, ty] = targetPosition(value);
+		const [cx, cy] = state.find(value);
+		const [tx, ty] = State.targetPosition(value);
 
 		result += Math.abs(cx - tx) + Math.abs(cy - ty);
 	}
@@ -161,58 +156,12 @@ function h(state) {
 	return result;
 }
 
-function find(state, value) {
-	for (let y = 0; y < 4; y++) {
-		const idx = state[y].indexOf(value);
-		if (idx !== -1) {
-			return [idx, y]
-		}
-	}
-}
-
-function targetPosition(value) {
-	const x = (value - 1) % 4;
-	const y = Math.floor((value - 1) / 4);
-	return [x, y];
-}
-
-function successorStates(state) {
-	return _.compact([
-		transition(state, TRANSITION_UP),
-		transition(state, TRANSITION_DOWN),
-		transition(state, TRANSITION_LEFT),
-		transition(state, TRANSITION_RIGHT),
-	]);
-}
-
-function transition(state, [dx, dy]) {
-	const [cx, cy] = find(state, 16);
-	const [nx, ny] = [cx+dx, cy+dy];
-
-	if (inField([nx, ny])) {
-		return swap(state, [cx, cy], [nx, ny]);
-	} else {
-		return null;
-	}
-}
-
-function swap(state, [ax, ay], [bx, by]) {
-	const copy = _.cloneDeep(state);
-	copy[ay][ax] = state[by][bx];
-	copy[by][bx] = state[ay][ax];
-	return copy;
-}
-
-function inField([x, y]) {
-	return (x >= 0 && x <= 3) && (y >= 0 && y <= 3);
-}
-
 $(document).keydown(ev => {
 	const keyTransition = KEY_TRANSITIONS[ev.key];
 	if (keyTransition) {
-		const nextState = transition(boardState, keyTransition);
+		const nextState = game.getState().afterTransition(keyTransition);
 		if (nextState)
-			publishState(nextState);
+			game.setState(nextState);
 	}
 });
 
@@ -241,8 +190,8 @@ class Toast {
 	}
 }
 
-
-publishState(boardState);
-resetTurnCount();
-
 const toast = new Toast();
+
+controlPanel.onHint(() => {
+	solve();
+});
