@@ -25,29 +25,32 @@
 			}
 
 			#board {
+				position: relative;
 				padding: 0.5rem;
-				width: 35rem;
-				height: 35rem;
+				width: 32rem;
+				height: 32rem;
 				background-color: #dee7e8;
 				border-radius: 1rem;
 				border: 0.3rem solid #576a71;
 				box-shadow: 0 5px 10px 0 #00000073;
-				display: grid;
-				grid-template-rows: 25% 25% 25% 25%;
-				grid-template-columns: 25% 25% 25% 25%;
 			}
 
 			.cell:not(.empty) {
 				color: rgba(0,0,0,0.5);
 				font-size: 3rem;
 
+				position: absolute;
 				background-color: #a6c1ca;
 				border-radius: 1rem;
+				width: 7rem;
+				height: 7rem;
 				margin: 0.5rem;
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				box-shadow: 0 2px 1px #0000006e;
+
+				transition: all 0.15s ease;
 			}
 
 			#controls {

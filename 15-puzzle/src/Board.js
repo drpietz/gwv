@@ -1,35 +1,37 @@
 import $ from 'jquery';
+import _ from 'lodash';
+import State from "./State";
 
 export default class Board {
 	constructor(state) {
 		this.$component = $('#board');
+		this.cells = [];
+		this.initializeCells();
 		this.setState(state);
 	}
 
-	getState() {
-		return this.state;
+	initializeCells() {
+		for (let i = 1; i <= 16; i++) {
+			const $cell = $('<div>', {'class': 'cell'});
+
+			if (i === 16) {
+				$cell.addClass('empty')
+			} else {
+				$cell.text(i);
+			}
+
+			this.cells.push($cell);
+			this.$component.append($cell);
+		}
 	}
 
 	setState(state) {
-		console.log("Update board");
-
-		this.$component.empty();
-
-		state.getState().forEach(row => {
-			row.forEach(cellValue => {
-				const $cell = $('<div>', {'class': 'cell'});
-
-				if (cellValue === 16) {
-					$cell.addClass('empty')
-				} else {
-					$cell.text(cellValue);
-				}
-
-				this.$component.append($cell);
-			});
-		});
-
-		this.state = state;
+		const fstate = _.flatten(state.getState());
+		for (let i = 0; i < fstate.length; i++) {
+			const targetValue = fstate[i];
+			const [tx, ty] = State.targetPosition(i+1);
+			this.cells[targetValue-1].css({top: (ty * 8 + 0.5) + 'rem', left: (tx * 8 + 0.5) + 'rem'});
+		}
 	}
 };
 
