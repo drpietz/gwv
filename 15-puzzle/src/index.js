@@ -17,10 +17,8 @@ game.onChange(() => {
 
 gameInputListener.onTransition(transition => game.transition(transition));
 controlPanel.onHint(() => game.hint());
+controlPanel.onRestart(() => game.restart());
 controlPanel.onInput(() => {
 	const currentState = game.getState().getState();
-	customInput(currentState).then(field => {
-		const newState = new GameState(field);
-		game.setState(newState);
-	})
+	customInput(currentState).then(field => game.setState(new GameState(field)))
 });

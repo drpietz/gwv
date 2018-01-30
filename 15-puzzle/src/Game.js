@@ -1,15 +1,18 @@
+import FieldGenerator from './FieldGenerator';
 import EventEmitter from 'events';
 import search from "./search";
 import toast from "./Toast";
+import GameState from "./GameState";
 
 export default class Game extends EventEmitter {
 	constructor(state) {
 		super();
 		this.state = state;
+		this.generator = new FieldGenerator();
 	}
 
-	restart() {
-		console.log('Restart requested');
+	async restart() {
+		this.setState(new GameState(this.generator.get()));
 	}
 
 	hint() {
@@ -22,7 +25,7 @@ export default class Game extends EventEmitter {
 			this.setState(nextState);
 	}
 
-	solve() {
+	async solve() {
 		search(this.getState()).then(async path => {
 			if (path === null) {
 				toast.toast("No solution found");
