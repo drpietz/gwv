@@ -6,16 +6,23 @@ export default class ControlPanel extends EventEmitter {
 		super();
 		this.game = game;
 
-		$('#button-restart').click(() => {
+		$('#button-restart').click(ev => {
+			ev.stopPropagation();
 			this.emit('restart');
 		});
 
-		$('#button-hint').click(() => {
-			console.log("Hint");
+		$('#button-hint').click(ev => {
+			ev.stopPropagation();
 			this.emit('hint');
 		});
 
 		this.$turnView = $('#turns');
+
+		this.$turnView.click(ev => {
+			ev.stopPropagation();
+			this.emit('input');
+		});
+
 		console.log("Set turn view counter", this.$turnView);
 		this.updateTurnViewCounter();
 		game.onChange(() => this.updateTurnViewCounter());
@@ -32,5 +39,9 @@ export default class ControlPanel extends EventEmitter {
 
 	onHint(handler) {
 		this.on('hint', handler);
+	}
+
+	onInput(handler) {
+		this.on('input', handler);
 	}
 }
