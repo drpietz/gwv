@@ -35,6 +35,16 @@
 				box-shadow: 0 5px 10px 0 #00000073;
 			}
 
+			#frame {
+				display: none;
+				position: absolute;
+				top: -1.5rem;
+				left: -1.5rem;
+				bottom: -1.5rem;
+				right: -1.5rem;
+				border: 1px solid pink;
+			}
+
 			.cell:not(.empty) {
 				color: rgba(0,0,0,0.5);
 				font-size: 3rem;
@@ -51,6 +61,10 @@
 				box-shadow: 0 2px 1px #0000006e;
 
 				transition: all 0.15s ease;
+			}
+
+			.cell.hidden {
+				opacity: 0.3;
 			}
 
 			#controls {
@@ -129,6 +143,7 @@
 	<body>
 		<div id="game">
 			<div id="board">
+				<div id="frame"></div>
 			</div>
 
 			<div id="controls">

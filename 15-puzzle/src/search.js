@@ -28,11 +28,9 @@ export default async function search(startState, heuristic=manhattan_without_emp
 		});
 
 		iterationCounter += 1;
-		if (iterationCounter > 5000) {
-			console.log("Stopped search after reaching iteration limit");
-			break;
-		}
 	}
+
+	console.log("No solution found");
 
 	return null;
 }

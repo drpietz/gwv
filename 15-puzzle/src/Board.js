@@ -5,9 +5,15 @@ import State from "./State";
 export default class Board {
 	constructor(state) {
 		this.$component = $('#board');
+		this.$frame = $('#frame');
 		this.cells = [];
 		this.initializeCells();
 		this.setState(state);
+
+		this.$component.click(ev => {
+			ev.stopPropagation();
+			this.$frame.toggle();
+		});
 	}
 
 	initializeCells() {
@@ -22,6 +28,12 @@ export default class Board {
 
 			this.cells.push($cell);
 			this.$component.append($cell);
+
+			$cell.click(ev => {
+				ev.stopPropagation();
+				$cell.toggleClass('hidden');
+				return true;
+			});
 		}
 	}
 
